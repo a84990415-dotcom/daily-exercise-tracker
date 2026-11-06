@@ -71,9 +71,10 @@
   .goal-row .glabel{font-size:13.5px;}
   .goal-row input[type=number]{width:70px;background:var(--card2);border:none;border-radius:7px;color:var(--text);padding:6px;text-align:center;font-size:14px;}
   .goal-row input[type=time]{background:var(--card2);border:none;border-radius:7px;color:var(--text);padding:6px;font-size:14px;}
-  .btn{display:block;width:100%;background:var(--accent);border:none;color:white;border-radius:10px;padding:12px;font-size:14px;font-weight:600;margin-top:10px;}
-  .btn.secondary{background:var(--card2);}
-  .btn.danger{background:var(--danger);}
+  .btn{display:block;width:100%;background:var(--accent);border:1px solid var(--accent2);color:white;border-radius:10px;padding:12px;font-size:14px;font-weight:600;margin-top:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+  .btn:active{filter:brightness(1.25);}
+  .btn.secondary{background:var(--card2);border-color:#64748b;}
+  .btn.danger{background:var(--danger);border-color:#f87171;}
   .pillrow{display:flex;gap:8px;margin-bottom:14px;}
   .pill{flex:1;background:var(--card2);border:none;color:var(--sub);border-radius:999px;padding:8px 0;font-size:13px;font-weight:600;}
   .pill.active{background:var(--accent);color:white;}
@@ -721,7 +722,7 @@ function renderSettings(){
     <div class="goal-row"><div class="glabel">알림 사용</div><input type="checkbox" id="a_enabled" ${a.enabled?"checked":""} style="width:20px;height:20px;"></div>
     <button class="btn" id="saveAlarms">알림 설정 저장</button>
     <div class="small" style="margin-top:10px;">브라우저 알림 권한: <b>${permState}</b></div>
-    <button class="btn secondary" id="reqPerm">알림 권한 요청</button>
+    <button type="button" class="btn secondary" id="reqPerm">알림 권한 요청</button>
     <div class="note">※ 안드로이드 PWA는 앱(탭)이 열려있거나 백그라운드에서 완전히 종료되지 않은 경우에만 알림이 안정적으로 울립니다. 알림을 놓쳐도 앱을 열면 상단에 미완료 안내가 표시됩니다.</div>
   </div>
   <div class="card">
@@ -750,7 +751,16 @@ function renderSettings(){
   };
   document.getElementById("reqPerm").onclick = ()=>{
     if(!("Notification" in window)){ showToast("이 브라우저는 알림을 지원하지 않습니다."); return; }
-    Notification.requestPermission().then(()=>{ renderSettings(); scheduleTodayNotifications(); });
+    if(Notification.permission === "denied"){
+      showToast("이미 차단된 상태예요. 주소창의 자물쇠 아이콘 → 사이트 설정에서 알림을 직접 허용해주세요.");
+      return;
+    }
+    Notification.requestPermission().then((result)=>{
+      renderSettings();
+      scheduleTodayNotifications();
+      if(result === "granted") showToast("알림이 허용되었습니다.");
+      else showToast("알림 요청 결과: " + result);
+    });
   };
   document.getElementById("exportBtn").onclick = exportData;
   document.getElementById("importBtn").onclick = ()=> document.getElementById("importFile").click();
